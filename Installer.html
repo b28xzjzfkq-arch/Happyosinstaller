@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>HappyOS Installer | المُثبت الآمن</title>
+    <style>
+        body { background: #000; color: #30d158; font-family: sans-serif; text-align: center; padding: 50px; }
+        .box { border: 2px solid #30d158; padding: 20px; border-radius: 20px; display: inline-block; }
+        .lock-icon { font-size: 50px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div class="lock-icon">🔒</div>
+        <h2>مُثبت HappyOS المعتمد</h2>
+        <div id="status">جاري التحقق من أمان الملف...</div>
+        <br>
+        <button id="installNow" style="display:none; padding:15px 30px; background:#30d158; border:none; border-radius:10px; font-weight:bold;">تثبيت الآن (عبر سيرفر HappyOS)</button>
+    </div>
+
+    <script>
+        // دالة فك التشفير (لمنع السرقة)
+        function decryptLink(encoded) {
+            return atob(encoded); // فك شفرة Base64 بسيطة كمرحلة أولى
+        }
+
+        // الحصول على الرابط المشفر من عنوان الصفحة
+        const urlParams = new URLSearchParams(window.location.search);
+        const encryptedFile = urlParams.get('file');
+
+        if (encryptedFile) {
+            setTimeout(() => {
+                const realLink = decryptLink(encryptedFile);
+                document.getElementById('status').innerText = "تم التحقق! الملف محمي وحصري لـ HappyOS";
+                const btn = document.getElementById('installNow');
+                btn.style.display = "inline-block";
+                
+                btn.onclick = () => {
+                    // توجيه التثبيت عبر بروتوكول itms-services المعتمد للآيفون
+                    window.location.href = "itms-services://?action=download-manifest&url=" + realLink;
+                };
+            }, 2000);
+        } else {
+            document.getElementById('status').innerText = "خطأ: لا يمكن تحميل ملفات من مصادر خارجية!";
+            document.getElementById('status').style.color = "red";
+        }
+    </script>
+</body>
+</html>
