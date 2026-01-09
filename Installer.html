@@ -1,112 +1,88 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HappyOS Installer | المُثبت الآمن</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HappyOS Installer</title>
     <style>
-        body { background: #000; color: #30d158; font-family: sans-serif; text-align: center; padding: 50px; }
-        .box { border: 2px solid #30d158; padding: 20px; border-radius: 20px; display: inline-block; }
-        .lock-icon { font-size: 50px; margin-bottom: 10px; }
+        :root { --main: #30d158; --bg: #000; --card: #1c1c1e; }
+        body { background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        
+        /* Tool Header */
+        .installer-header { padding: 40px 20px; text-align: center; background: linear-gradient(180deg, #111 0%, #000 100%); }
+        .installer-header h2 { margin: 0; font-size: 28px; font-weight: 800; }
+        .installer-header span { color: var(--main); font-size: 12px; font-weight: bold; letter-spacing: 2px; }
+
+        /* Installation Progress Simulation */
+        .status-box { margin: 20px; padding: 20px; background: var(--card); border-radius: 20px; border: 1px solid #333; }
+        .progress-bar { height: 6px; background: #333; border-radius: 3px; margin: 15px 0; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--main); transition: width 0.5s; }
+
+        /* App List */
+        .app-list { padding: 0 20px; }
+        .app-item { background: var(--card); padding: 15px; border-radius: 18px; display: flex; align-items: center; margin-bottom: 12px; }
+        .app-icon { width: 50px; height: 50px; border-radius: 12px; margin-right: 15px; }
+        .install-btn { margin-left: auto; background: var(--main); color: #000; padding: 8px 15px; border-radius: 15px; font-weight: bold; font-size: 12px; border: none; cursor: pointer; }
+
+        /* Secret Tool Script */
+        #installer-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <div class="lock-icon">🔒</div>
-        <h2>مُثبت HappyOS المعتمد</h2>
-        <div id="status">جاري التحقق من أمان الملف...</div>
-        <br>
-        <button id="installNow" style="display:none; padding:15px 30px; background:#30d158; border:none; border-radius:10px; font-weight:bold;">تثبيت الآن (عبر سيرفر HappyOS)</button>
+
+    <div class="installer-header">
+        <span>HAPPYOS ENGINE v1.0</span>
+        <h2>App Installer</h2>
+    </div>
+
+    <div class="status-box">
+        <div id="status-text">System Ready</div>
+        <div class="progress-bar"><div id="fill" class="progress-fill"></div></div>
+        <small style="color: #666;">Note: Use a PC if certificate is revoked.</small>
+    </div>
+
+    <div class="app-list">
+        <div class="app-item">
+            <img src="https://upload.wikimedia.org/wikipedia/en/c/c4/GTASABOX.jpg" class="app-icon">
+            <div class="info"><h3>GTA SA</h3><p>2.1 GB</p></div>
+            <button class="install-btn" onclick="startInstall('GTA San Andreas')">INSTALL</button>
+        </div>
+        
+        <div class="app-item">
+            <img src="https://mc-pc.net/uploads/posts/2021-09/1632133271_minecraft-icon.png" class="app-icon">
+            <div class="info"><h3>Minecraft</h3><p>320 MB</p></div>
+            <button class="install-btn" onclick="startInstall('Minecraft')">INSTALL</button>
+        </div>
+    </div>
+
+    <div id="installer-overlay">
+        <h3 id="installing-name">Installing...</h3>
+        <p style="color: var(--main);">Connecting to Secure Server</p>
+        <div class="progress-bar" style="width: 80%;"><div id="overlay-fill" class="progress-fill"></div></div>
     </div>
 
     <script>
-        // دالة فك التشفير (لمنع السرقة)
-        function decryptLink(encoded) {
-            return atob(encoded); // فك شفرة Base64 بسيطة كمرحلة أولى
-        }
-
-        // الحصول على الرابط المشفر من عنوان الصفحة
-        const urlParams = new URLSearchParams(window.location.search);
-        const encryptedFile = urlParams.get('file');
-
-        if (encryptedFile) {
-            setTimeout(() => {
-                const realLink = decryptLink(encryptedFile);
-                document.getElementById('status').innerText = "تم التحقق! الملف محمي وحصري لـ HappyOS";
-                const btn = document.getElementById('installNow');
-                btn.style.display = "inline-block";
+        function startInstall(appName) {
+            document.getElementById('installer-overlay').style.display = 'flex';
+            document.getElementById('installing-name').innerText = "Installing " + appName;
+            
+            let progress = 0;
+            let interval = setInterval(() => {
+                progress += Math.random() * 10;
+                document.getElementById('overlay-fill').style.width = progress + '%';
                 
-                btn.onclick = () => {
-                    // توجيه التثبيت عبر بروتوكول itms-services المعتمد للآيفون
-                    window.location.href = "itms-services://?action=download-manifest&url=" + realLink;
-                };
-            }, 2000);
-        } else {
-            document.getElementById('status').innerText = "خطأ: لا يمكن تحميل ملفات من مصادر خارجية!";
-            document.getElementById('status').style.color = "red";
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    // هذه هي اللحظة التي يحاول فيها المتجر طلب التثبيت من الآيفون
+                    window.location.href = "itms-services://?action=download-manifest&url=https://usescarlet.com/manifest.plist";
+                    
+                    setTimeout(() => {
+                        alert("If the install prompt didn't appear, the certificate is currently REVOKED by Apple. Try again later!");
+                        document.getElementById('installer-overlay').style.display = 'none';
+                    }, 3000);
+                }
+            }, 200);
         }
     </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HappyOS Installer | مثبت هابي</title>
-    <style>
-        body { background-color: #000; color: #fff; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { background: #1c1c1e; padding: 40px; border-radius: 30px; text-align: center; border: 2px solid #30d158; width: 80%; max-width: 400px; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #30d158; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .btn { background: #30d158; color: #000; padding: 15px 30px; border-radius: 15px; font-weight: bold; text-decoration: none; display: none; margin-top: 20px; }
-        h2 { color: #30d158; }
-    </style>
-</head>
-<body>
-
-<div class="card">
-    <div id="loadingSection">
-        <div class="loader"></div>
-        <p>جاري التحقق من أمان الرابط...</p>
-    </div>
-    
-    <div id="installSection" style="display:none;">
-        <h2>جهازك جاهز!</h2>
-        <p>تم فك تشفير الملف بنجاح عبر HappyOS</p>
-        <a id="realLink" href="#" class="btn">تثبيت اللعبة الآن 🚀</a>
-    </div>
-</div>
-
-<script>
-    // وظيفة فك التشفير التلقائي
-    window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const encodedFile = urlParams.get('file');
-
-        if (encodedFile) {
-            setTimeout(() => {
-                try {
-                    // فك التشفير
-                    const decoded = atob(encodedFile);
-                    
-                    // تحويل الرابط إلى رابط تثبيت آيفون
-                    const installLink = "itms-services://?action=download-manifest&url=" + decoded;
-                    
-                    document.getElementById('loadingSection').style.display = "none";
-                    document.getElementById('installSection').style.display = "block";
-                    
-                    const btn = document.getElementById('realLink');
-                    btn.style.display = "inline-block";
-                    btn.href = installLink;
-                } catch (e) {
-                    alert("خطأ في فك تشفير الرابط!");
-                }
-            }, 2000); // تأخير وهمي لزيادة الهيبة والأمان
-        } else {
-            document.body.innerHTML = "<h1>خطأ: لم يتم العثور على ملف لتثبيته!</h1>";
-        }
-    }
-</script>
-
 </body>
 </html>
